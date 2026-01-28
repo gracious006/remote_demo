@@ -32,12 +32,11 @@ class Post {
     };
   }
 }
-// 2. REPOSITORY [00:09:41]
+
 class PostRepository {
-  // Base URL for JSONPlaceholder API
+
   final String baseUrl = "https://jsonplaceholder.typicode.com/posts";
 
-  // GET Method to fetch all posts [00:12:46]
   Future<List<Post>> fetchPosts() async {
     final response = await http.get(Uri.parse(baseUrl));
 
@@ -47,5 +46,96 @@ class PostRepository {
     } else {
       throw Exception("Failed to load posts");
     }
+  }
+
+  Future<Post> createPost(Post post) async {
+    final response = await http.post(
+      Uri.parse(baseUrl),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(post.toJson()),
+    );
+
+    if (response.statusCode == 201) {
+      return Post.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception("Failed to create post");
+    }
+  }
+}
+
+
+void main() {
+  runApp(const MaterialApp(home: PostScreen()));
+}
+
+class PostScreen extends StatefulWidget {
+  const PostScreen({super.key});
+
+  @override
+  State<PostScreen> createState() => _PostScreenState();
+}
+
+class _PostScreenState extends State<PostScreen> {
+  final PostRepository repository = PostRepository();
+  late Future<List<Post>> postList;
+
+  @override
+  void initState() {
+    super.initState();
+    postList = repository.fetchPosts();
+  }
+
+  void sendPost() async {
+    try {
+      Post newPost = Post(
+          userId: 1,
+          title: "Hello Flutter",
+          body: "This is a test post"
+      );
+
+      Post createdPost = await repository.createPost(newPost);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Success! Created Post ID: ${createdPost.id}"))
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error creating post"))
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Flutter Get & Post")),
+      body: FutureBuilder<List<Post>>(
+        future: postList,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator()); // [00:25:35]
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else if (snapshot.hasData) {
+            return ListView.builder(
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) {
+                final post = snapshot.data![index];
+                return ListTile(
+                  title: Text(post.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(post.body),
+                );
+              },
+            );
+          }
+          return const Center(child: Text("No data found"));
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: sendPost,
+        child: const Icon(Icons.add), // Triggers the POST request [00:30:58]
+      ),
+    );
   }
 }
