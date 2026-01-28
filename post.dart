@@ -114,7 +114,7 @@ class _PostScreenState extends State<PostScreen> {
         future: postList,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator()); // [00:25:35]
+            return const Center(child: CircularProgressIndicator()); 
           } else if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           } else if (snapshot.hasData) {
@@ -134,7 +134,7 @@ class _PostScreenState extends State<PostScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: sendPost,
-        child: const Icon(Icons.add), // Triggers the POST request [00:30:58]
+        child: const Icon(Icons.add), 
       ),
     );
   }
